@@ -1,5 +1,7 @@
 # ctrx
 
+[![GCC](https://github.com/jan-moeller/ctrx/actions/workflows/gcc.yml/badge.svg)](https://github.com/jan-moeller/ctrx/actions/workflows/gcc.yml)
+
 This is a macro-based contracts stand-in while we're waiting for official
 language support. It provides precondition, postcondition, and assertion
 checking, and has several modes that can be selected at compile time.
