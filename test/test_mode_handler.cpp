@@ -24,101 +24,73 @@
 #include <bugspray/bugspray.hpp>
 
 #define CTRX_CONFIG_MODE HANDLER
-#define CTRX_CONFIG_HANDLER_PRECONDITION precondition_handler
-#define CTRX_CONFIG_HANDLER_POSTCONDITION postcondition_handler
-#define CTRX_CONFIG_HANDLER_ASSERTION assertion_handler
 #include "ctrx/contracts.hpp"
 
 char const* pre_msg    = nullptr;
 char const* post_msg   = nullptr;
 char const* assert_msg = nullptr;
 
-constexpr void precondition_handler(char const* s, std::source_location)
+namespace ctrx
 {
-    if (!std::is_constant_evaluated())
+void handle_contract_violation(contract_type t, char const* s, std::source_location const&)
+{
+    switch (t)
+    {
+    case contract_type::precondition:
         pre_msg = s;
-}
-constexpr void postcondition_handler(char const* s, std::source_location)
-{
-    if (!std::is_constant_evaluated())
+        break;
+    case contract_type::postcondition:
         post_msg = s;
-}
-constexpr void assertion_handler(char const* s, std::source_location)
-{
-    if (!std::is_constant_evaluated())
+        break;
+    case contract_type::assertion:
         assert_msg = s;
+        break;
+    }
 }
+} // namespace ctrx
 
-TEST_CASE("mode: handler", "[ctrx]")
+TEST_CASE("mode: handler", "[ctrx]", runtime)
 {
     SECTION("pre")
     {
-        if (!std::is_constant_evaluated())
-        {
-            pre_msg    = nullptr;
-            post_msg   = nullptr;
-            assert_msg = nullptr;
-        }
+        pre_msg    = nullptr;
+        post_msg   = nullptr;
+        assert_msg = nullptr;
         CTRX_PRECONDITION(true);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == nullptr);
-            CHECK(post_msg == nullptr);
-            CHECK(assert_msg == nullptr);
-        }
+        CHECK(pre_msg == nullptr);
+        CHECK(post_msg == nullptr);
+        CHECK(assert_msg == nullptr);
         CTRX_PRECONDITION(false);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == "false");
-            CHECK(post_msg == nullptr);
-            CHECK(assert_msg == nullptr);
-        }
+        CHECK(pre_msg == "false");
+        CHECK(post_msg == nullptr);
+        CHECK(assert_msg == nullptr);
     }
     SECTION("post")
     {
-        if (!std::is_constant_evaluated())
-        {
-            pre_msg    = nullptr;
-            post_msg   = nullptr;
-            assert_msg = nullptr;
-        }
+        pre_msg    = nullptr;
+        post_msg   = nullptr;
+        assert_msg = nullptr;
         CTRX_POSTCONDITION(true);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == nullptr);
-            CHECK(post_msg == nullptr);
-            CHECK(assert_msg == nullptr);
-        }
+        CHECK(pre_msg == nullptr);
+        CHECK(post_msg == nullptr);
+        CHECK(assert_msg == nullptr);
         CTRX_POSTCONDITION(false);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == nullptr);
-            CHECK(post_msg == "false");
-            CHECK(assert_msg == nullptr);
-        }
+        CHECK(pre_msg == nullptr);
+        CHECK(post_msg == "false");
+        CHECK(assert_msg == nullptr);
     }
     SECTION("assert")
     {
-        if (!std::is_constant_evaluated())
-        {
-            pre_msg    = nullptr;
-            post_msg   = nullptr;
-            assert_msg = nullptr;
-        }
+        pre_msg    = nullptr;
+        post_msg   = nullptr;
+        assert_msg = nullptr;
         CTRX_ASSERT(true);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == nullptr);
-            CHECK(post_msg == nullptr);
-            CHECK(assert_msg == nullptr);
-        }
+        CHECK(pre_msg == nullptr);
+        CHECK(post_msg == nullptr);
+        CHECK(assert_msg == nullptr);
         CTRX_ASSERT(false);
-        if (!std::is_constant_evaluated())
-        {
-            CHECK(pre_msg == nullptr);
-            CHECK(post_msg == nullptr);
-            CHECK(assert_msg == "false");
-        }
+        CHECK(pre_msg == nullptr);
+        CHECK(post_msg == nullptr);
+        CHECK(assert_msg == "false");
     }
 }
-EVAL_TEST_CASE("mode: handler");

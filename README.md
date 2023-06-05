@@ -74,9 +74,35 @@ out-of-contract.
 
 ### HANDLER
 
-This is the most general mode; it allows you to register any function as a
-contract violation handler. This can be used for logging, and you can decide
-whether you want to terminate, throw an exception, or even continue.
+This is the most general mode; it allows you to implement your own contract
+violation handler. This can be used for logging, and you can decide whether you
+want to terminate, throw an exception, or even continue.
+You have to implement a function with the following signature as handler:
+```c++
+namespace ctrx
+{
+void handle_contract_violation(contract_type, char const*, std::source_location const&);
+} // namespace ctrx
+```
+Here, `contract_type` is defined by `contracts.hpp` like this:
+```c++
+namespace ctrx
+{
+enum class contract_type
+{
+    precondition,
+    postcondition,
+    assertion,
+};
+} // namespace ctrx
+```
+The second function argument is a stringified version of the failed contract,
+and the third argument is the source location where the contract violation
+occured.
+
+Note that the HANDLER mode falls back to ASSERT mode during constant
+evaluation. This is because (for obvious reasons) it isn't possible to call
+`extern` functions during constant evaluation.
 
 ## Usage
 
@@ -95,40 +121,6 @@ easily do that.
   Set the mode for postconditions only. Defaults to CTRX_CONFIG_MODE.
 * CTRX_CONFIG_MODE_ASSERTION \
   Set the mode for assertions only. Defaults to CTRX_CONFIG_MODE.
-* CTRX_CONFIG_HANDLER \
-  Only relevant to the HANDLER mode. Sets the name of the global handler. The
-  handler must have the following signature:
-  ```c++
-  /* constexpr */ void handler(char const* assertion, std::source_location const& sloc);
-  ```
-  When called, the first argument will be a string representation of the failed
-  check, and the second argument will be the source location of that check.
-  If the handler isn't marked `constexpr`, then the macros can't be used in
-  `constexpr` code.
-* CTRX_CONFIG_HANDLER_PRECONDITION \
-  Only relevant to the HANDLER mode. Sets the name of the precondition handler.
-  Defaults to CTRX_CONFIG_HANDLER.
-* CTRX_CONFIG_HANDLER_POSTCONDITION \
-  Only relevant to the HANDLER mode. Sets the name of the postcondition handler.
-  Defaults to CTRX_CONFIG_HANDLER.
-* CTRX_CONFIG_HANDLER_ASSERTION \
-  Only relevant to the HANDLER mode. Sets the name of the assertion handler.
-  Defaults to CTRX_CONFIG_HANDLER.
-* CTRX_CONFIG_HANDLER_INCLUDE \
-  Only relevant to the HANDLER mode. Can be set to automatically `#include` the
-  correct header for the global handler.
-* CTRX_CONFIG_HANDLER_INCLUDE_PRECONDITION \
-  Only relevant to the HANDLER mode. Can be set to automatically `#include` the
-  correct header for the precondition handler. Defaults to
-  CTRX_CONFIG_HANDLER_INCLUDE.
-* CTRX_CONFIG_HANDLER_INCLUDE_POSTCONDITION \
-  Only relevant to the HANDLER mode. Can be set to automatically `#include` the
-  correct header for the postcondition handler. Defaults to
-  CTRX_CONFIG_HANDLER_INCLUDE.
-* CTRX_CONFIG_HANDLER_INCLUDE_ASSERTION \
-  Only relevant to the HANDLER mode. Can be set to automatically `#include` the
-  correct header for the assertion handler. Defaults to
-  CTRX_CONFIG_HANDLER_INCLUDE.
 
 ## CMake Integration
 

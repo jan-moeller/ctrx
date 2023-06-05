@@ -56,8 +56,13 @@
 #define CTRX_DETAIL_MODE_HANDLER(TYPE, ...)                                                                            \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (!(__VA_ARGS__))                                                                                            \
-            CTRX_DETAIL_HANDLER(TYPE)(#__VA_ARGS__, std::source_location::current());                                  \
+        if (std::is_constant_evaluated())                                                                              \
+            assert((__VA_ARGS__));                                                                                     \
+        else if (!(__VA_ARGS__))                                                                                       \
+            ::ctrx::handle_contract_violation(CTRX_DETAIL_TYPE_ENUM(TYPE),                                             \
+                                              #__VA_ARGS__,                                                            \
+                                              std::source_location::current());                                        \
+                                                                                                                       \
     } while (false)
 
 // Helpers used above
@@ -65,46 +70,6 @@
 #define CTRX_DETAIL_MODE_THROW_EXCEPTION_POSTCONDITION ::ctrx::postcondition_violation
 #define CTRX_DETAIL_MODE_THROW_EXCEPTION_ASSERTION ::ctrx::assertion_violation
 #define CTRX_DETAIL_MODE_THROW_EXCEPTION(TYPE) CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_THROW_EXCEPTION_, TYPE)
-
-#define CTRX_DETAIL_HANDLER(TYPE) CTRX_DETAIL_CONCAT2(CTRX_CONFIG_HANDLER_, TYPE)
-
-// Fall back to the global handler, if no specific one is set for ASSERTION/PRECONDITION/POSTCONDITION
-#if !defined(CTRX_CONFIG_HANDLER_PRECONDITION)
-#if defined(CTRX_CONFIG_HANDLER)
-#define CTRX_CONFIG_HANDLER_PRECONDITION CTRX_CONFIG_HANDLER
-#endif
-#endif
-
-#if !defined(CTRX_CONFIG_HANDLER_POSTCONDITION)
-#if defined(CTRX_CONFIG_HANDLER)
-#define CTRX_CONFIG_HANDLER_POSTCONDITION CTRX_CONFIG_HANDLER
-#endif
-#endif
-
-#if !defined(CTRX_CONFIG_HANDLER_ASSERTION)
-#if defined(CTRX_CONFIG_HANDLER)
-#define CTRX_CONFIG_HANDLER_ASSERTION CTRX_CONFIG_HANDLER
-#endif
-#endif
-
-// Same thing for handler configured handler includes
-#if !defined(CTRX_CONFIG_HANDLER_INCLUDE_PRECONDITION)
-#if defined(CTRX_CONFIG_HANDLER_INCLUDE)
-#define CTRX_CONFIG_HANDLER_INCLUDE_PRECONDITION CTRX_CONFIG_HANDLER_INCLUDE
-#endif
-#endif
-
-#if !defined(CTRX_CONFIG_HANDLER_INCLUDE_POSTCONDITION)
-#if defined(CTRX_CONFIG_HANDLER_INCLUDE)
-#define CTRX_CONFIG_HANDLER_INCLUDE_POSTCONDITION CTRX_CONFIG_HANDLER_INCLUDE
-#endif
-#endif
-
-#if !defined(CTRX_CONFIG_HANDLER_INCLUDE_ASSERTION)
-#if defined(CTRX_CONFIG_HANDLER_INCLUDE)
-#define CTRX_CONFIG_HANDLER_INCLUDE_ASSERTION CTRX_CONFIG_HANDLER_INCLUDE
-#endif
-#endif
 
 // If no global mode is set use ASSERT
 #if !defined(CTRX_CONFIG_MODE)
@@ -143,9 +108,6 @@
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION)
 #define CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION
 #endif
-#if defined(CTRX_CONFIG_HANDLER_INCLUDE_PRECONDITION) && !defined(CTRX_DETAIL_NEED_INCLUDE_PRECONDITION_HANDLER)
-#define CTRX_DETAIL_NEED_INCLUDE_PRECONDITION_HANDLER
-#endif
 #elif CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_PRECONDITION) == CTRX_DETAIL_MODE_NUM_TERMINATE
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_EXCEPTION)
 #define CTRX_DETAIL_NEED_INCLUDE_EXCEPTION
@@ -164,9 +126,6 @@
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION)
 #define CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION
 #endif
-#if defined(CTRX_CONFIG_HANDLER_INCLUDE_POSTCONDITION) && !defined(CTRX_DETAIL_NEED_INCLUDE_POSTCONDITION_HANDLER)
-#define CTRX_DETAIL_NEED_INCLUDE_POSTCONDITION_HANDLER
-#endif
 #elif CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_PRECONDITION) == CTRX_DETAIL_MODE_NUM_TERMINATE
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_EXCEPTION)
 #define CTRX_DETAIL_NEED_INCLUDE_EXCEPTION
@@ -184,9 +143,6 @@
 #elif CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_ASSERTION) == CTRX_DETAIL_MODE_NUM_HANDLER
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION)
 #define CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION
-#endif
-#if defined(CTRX_CONFIG_ASSERT_HANDLER_INCLUDE) && !defined(CTRX_DETAIL_NEED_INCLUDE_ASSERT_HANDLER)
-#define CTRX_DETAIL_NEED_INCLUDE_ASSERT_HANDLER
 #endif
 #elif CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_PRECONDITION) == CTRX_DETAIL_MODE_NUM_TERMINATE
 #if !defined(CTRX_DETAIL_NEED_INCLUDE_EXCEPTION)
@@ -209,15 +165,6 @@
 #if defined(CTRX_DETAIL_NEED_INCLUDE_SOURCE_LOCATION)
 #include <source_location>
 #endif
-#if defined(CTRX_DETAIL_NEED_INCLUDE_PRECONDITION_HANDLER)
-#include CTRX_CONFIG_HANDLER_INCLUDE_PRECONDITION
-#endif
-#if defined(CTRX_DETAIL_NEED_INCLUDE_POSTCONDITION_HANDLER)
-#include CTRX_CONFIG_HANDLER_INCLUDE_POSTCONDITION
-#endif
-#if defined(CTRX_DETAIL_NEED_INCLUDE_ASSERT_HANDLER)
-#include CTRX_CONFIG_ASSERT_HANDLER_INCLUDE
-#endif
 
 // Some helpers used below
 #define CTRX_DETAIL_GET_CONFIG_MODE(TYPE) CTRX_DETAIL_CONCAT2(CTRX_CONFIG_MODE_, TYPE)
@@ -228,5 +175,28 @@
 #define CTRX_PRECONDITION(...) CTRX_DETAIL_CHECK(PRECONDITION, __VA_ARGS__)
 #define CTRX_POSTCONDITION(...) CTRX_DETAIL_CHECK(POSTCONDITION, __VA_ARGS__)
 #define CTRX_ASSERT(...) CTRX_DETAIL_CHECK(ASSERTION, __VA_ARGS__)
+
+// Define handler entry point if required
+#if CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_PRECONDITION) == CTRX_DETAIL_MODE_NUM_HANDLER          \
+    || CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_POSTCONDITION) == CTRX_DETAIL_MODE_NUM_HANDLER      \
+    || CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_ASSERTION) == CTRX_DETAIL_MODE_NUM_HANDLER
+#define CTRX_DETAIL_NEED_CONTRACT_VIOLATION_HANDLER_ENTRY_POINT
+#endif
+#if defined(CTRX_DETAIL_NEED_CONTRACT_VIOLATION_HANDLER_ENTRY_POINT)
+#define CTRX_DETAIL_TYPE_ENUM_PRECONDITION ::ctrx::contract_type::precondition
+#define CTRX_DETAIL_TYPE_ENUM_POSTCONDITION ::ctrx::contract_type::postcondition
+#define CTRX_DETAIL_TYPE_ENUM_ASSERTION ::ctrx::contract_type::assertion
+#define CTRX_DETAIL_TYPE_ENUM(TYPE) CTRX_DETAIL_CONCAT2(CTRX_DETAIL_TYPE_ENUM_, TYPE)
+namespace ctrx
+{
+enum class contract_type
+{
+    precondition,
+    postcondition,
+    assertion,
+};
+extern void handle_contract_violation(contract_type, char const*, std::source_location const&);
+} // namespace ctrx
+#endif
 
 #endif // CTRX_CONTRACTS_HPP
