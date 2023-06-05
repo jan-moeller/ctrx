@@ -26,15 +26,15 @@
 #define CTRX_CONFIG_MODE THROW
 #include "ctrx/contracts.hpp"
 
-constexpr void precondition_failure()
+void precondition_failure()
 {
     CTRX_PRECONDITION(false);
 }
-constexpr void postcondition_failure()
+void postcondition_failure()
 {
     CTRX_POSTCONDITION(false);
 }
-constexpr void assertion_failure()
+void assertion_failure()
 {
     CTRX_ASSERT(false);
 }
