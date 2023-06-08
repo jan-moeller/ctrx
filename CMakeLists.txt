@@ -24,7 +24,6 @@ CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.11.0")
 #############################################################################################################
 # Build configuration
 #############################################################################################################
-option(CTRX_BUILD_TESTS "Enable building the ctrx tests" OFF)
 set(CTRX_CONFIG_MODE CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER")
 set(CTRX_CONFIG_MODE_PRECONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
 set(CTRX_CONFIG_MODE_POSTCONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
@@ -34,7 +33,6 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "    ${PROJECT_NAME} (${PROJECT_VERSION})")
 message(STATUS "------------------------------------------------------------------------------")
 message(STATUS "Build type:                ${CMAKE_BUILD_TYPE}")
-message(STATUS "Build unit tests:          ${CTRX_BUILD_TESTS}")
 message(STATUS "Global mode:               ${CTRX_CONFIG_MODE}")
 message(STATUS "  - Precondition mode:     ${CTRX_CONFIG_MODE_PRECONDITION}")
 message(STATUS "  - Postcondition mode:    ${CTRX_CONFIG_MODE_POSTCONDITION}")
@@ -83,11 +81,3 @@ packageProject(
         DEPENDENCIES ""
 )
 
-#############################################################################################################
-# Unit test targets
-#############################################################################################################
-if (${CTRX_BUILD_TESTS})
-    include(CTest)
-    enable_testing()
-    add_subdirectory(test)
-endif ()

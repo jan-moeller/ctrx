@@ -21,14 +21,27 @@
 # OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 # SOFTWARE.
 #
+cmake_minimum_required(VERSION 3.14)
+
+project(ctrx-tests LANGUAGES CXX)
+
+include(../cmake/CPM.cmake)
+CPMAddPackage(
+        NAME ctrx
+        SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..
+        OPTIONS "CTRX_CONFIG_MODE THROW"
+)
 CPMAddPackage("gh:jan-moeller/bugspray@0.2.0")
+
+include(CTest)
+enable_testing()
 
 function(create_test name)
     set(TEST_EXEC_NAME ${PROJECT_NAME}-tests-${name})
     add_executable(${TEST_EXEC_NAME}
             test_${name}.cpp
     )
-    target_link_libraries(${TEST_EXEC_NAME} PUBLIC bugspray-with-main ${PROJECT_NAME})
+    target_link_libraries(${TEST_EXEC_NAME} PUBLIC bugspray-with-main ctrx::ctrx)
     set_target_properties(${TEST_EXEC_NAME} PROPERTIES
             CXX_STANDARD 20
             CXX_STANDARD_REQUIRED YES
@@ -47,5 +60,4 @@ endfunction()
 create_test(mode_off)
 create_test(mode_throw)
 create_test(mode_handler)
-
 create_test(fibonacci)

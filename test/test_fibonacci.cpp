@@ -21,10 +21,9 @@
 // OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
 // SOFTWARE.
 //
-#include <bugspray/bugspray.hpp>
-
-#define CTRX_CONFIG_MODE THROW
 #include "ctrx/contracts.hpp"
+
+#include <bugspray/bugspray.hpp>
 
 #include <utility>
 

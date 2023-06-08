@@ -23,6 +23,7 @@
 //
 #include <bugspray/bugspray.hpp>
 
+#undef CTRX_CONFIG_MODE
 #define CTRX_CONFIG_MODE OFF
 #include "ctrx/contracts.hpp"
 
