@@ -25,6 +25,8 @@
 #ifndef CTRX_CONTRACTS_HPP
 #define CTRX_CONTRACTS_HPP
 
+#include "ctrx/contract_type.hpp"
+
 // Helper macro to concatenate tokens
 #define CTRX_DETAIL_CONCAT(A, B) A##B
 #define CTRX_DETAIL_CONCAT2(A, B) CTRX_DETAIL_CONCAT(A, B)
@@ -45,7 +47,8 @@
     do                                                                                                                 \
     {                                                                                                                  \
         if (!(__VA_ARGS__))                                                                                            \
-            throw CTRX_DETAIL_MODE_THROW_EXCEPTION(TYPE){#TYPE " failure: " #__VA_ARGS__};                             \
+            throw CTRX_DETAIL_MODE_THROW_EXCEPTION(TYPE){#TYPE " failure: " #__VA_ARGS__,                              \
+                                                         std::source_location::current()};                             \
     } while (false)
 #define CTRX_DETAIL_MODE_TERMINATE(TYPE, ...)                                                                          \
     do                                                                                                                 \
@@ -156,6 +159,7 @@
 #endif
 #if defined(CTRX_DETAIL_NEED_INCLUDE_ASSERTION_EXCEPTIONS)
 #include "ctrx/exceptions/assertion_violation.hpp"
+#include "ctrx/exceptions/contract_violation.hpp"
 #include "ctrx/exceptions/postcondition_violation.hpp"
 #include "ctrx/exceptions/precondition_violation.hpp"
 #endif
@@ -189,12 +193,6 @@
 #define CTRX_DETAIL_TYPE_ENUM(TYPE) CTRX_DETAIL_CONCAT2(CTRX_DETAIL_TYPE_ENUM_, TYPE)
 namespace ctrx
 {
-enum class contract_type
-{
-    precondition,
-    postcondition,
-    assertion,
-};
 extern void handle_contract_violation(contract_type, char const*, std::source_location const&);
 } // namespace ctrx
 #endif

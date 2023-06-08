@@ -25,20 +25,16 @@
 #ifndef CTRX_PRECONDITION_VIOLATION_HPP
 #define CTRX_PRECONDITION_VIOLATION_HPP
 
+#include "ctrx/exceptions/assertion_violation.hpp"
+
 namespace ctrx
 {
-class precondition_violation
+struct precondition_violation : contract_violation
 {
-  public:
-    constexpr explicit precondition_violation(char const* what)
-        : m_what(what)
+    constexpr explicit precondition_violation(char const* what, std::source_location sloc)
+        : contract_violation(contract_type::assertion, what, std::move(sloc))
     {
     }
-
-    [[nodiscard]] constexpr auto what() const noexcept -> char const* { return m_what; }
-
-  private:
-    char const* m_what;
 };
 } // namespace ctrx
 

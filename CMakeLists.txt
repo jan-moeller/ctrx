@@ -45,8 +45,10 @@ message(STATUS "  - Assertion mode:        ${CTRX_CONFIG_MODE_ASSERTION}")
 # Main library target
 #############################################################################################################
 add_library(${PROJECT_NAME} INTERFACE
+        include/ctrx/contract_type.hpp
         include/ctrx/contracts.hpp
         include/ctrx/exceptions/assertion_violation.hpp
+        include/ctrx/exceptions/contract_violation.hpp
         include/ctrx/exceptions/postcondition_violation.hpp
         include/ctrx/exceptions/precondition_violation.hpp
 )

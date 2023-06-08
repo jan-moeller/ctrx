@@ -22,20 +22,17 @@
 // SOFTWARE.
 //
 
-#ifndef CTRX_ASSERTION_VIOLATION_HPP
-#define CTRX_ASSERTION_VIOLATION_HPP
-
-#include "ctrx/exceptions/contract_violation.hpp"
+#ifndef CTRX_TESTS_CONTRACT_TYPE_HPP
+#define CTRX_TESTS_CONTRACT_TYPE_HPP
 
 namespace ctrx
 {
-struct assertion_violation : contract_violation
+enum class contract_type
 {
-    constexpr explicit assertion_violation(char const* what, std::source_location sloc)
-        : contract_violation(contract_type::assertion, what, std::move(sloc))
-    {
-    }
+    precondition,
+    postcondition,
+    assertion,
 };
-} // namespace ctrx
+}
 
-#endif // CTRX_ASSERTION_VIOLATION_HPP
+#endif // CTRX_TESTS_CONTRACT_TYPE_HPP
