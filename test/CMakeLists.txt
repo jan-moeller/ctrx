@@ -61,3 +61,5 @@ create_test(mode_off)
 create_test(mode_throw)
 create_test(mode_handler)
 create_test(fibonacci)
+
+add_subdirectory(test_with_deps)
