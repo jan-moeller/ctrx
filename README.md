@@ -57,14 +57,16 @@ builds, and implementation defined checking in debug builds.
 
 Uses C++23's attribute `[[assume()]]`. Note that this doesn't check at all, but
 uses the contract for optimization, potentially introducing *more* UB rather
-than reducing it. Use this for release builds if performance matters, and you're
-really, *really* sure you never call anything out of contract.
+than reducing it. Use this for release builds if performance matters most, 
+you're really, *really* sure you never call anything out of contract, and
+you're feeling particularly adventurous today.
 
 ### THROW
 
 Throws exceptions on contract violations, namely `ctrx::precondition_violation`,
-`ctrx::postcondition_violation` and `ctrx::assertion_violation`. Use this for
-unit-testing out-of-contract calls.
+`ctrx::postcondition_violation` and `ctrx::assertion_violation`. All of these
+exceptions inherit from `ctrx::contract_violation`, which can be used as a 
+catch-all. Use this mode for unit-testing out-of-contract calls.
 
 ### TERMINATE
 
@@ -126,12 +128,12 @@ easily do that.
 
 It's easiest using cmake with [CPM](https://github.com/cpm-cmake/CPM.cmake).
 
-If you're writing an executable:
+If you're writing an executable and you absolutely require one specific mode:
 
 ```cmake
 CPMAddPackage(
         NAME ctrx
-        VERSION 1.0.0
+        VERSION 1.1.0
         GITHUB_REPOSITORY jan-moeller/ctrx
         OPTIONS "CTRX_CONFIG_MODE THROW"
 ) # Or set whatever options you like
@@ -141,9 +143,12 @@ target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
 If you're writing a library:
 
 ```cmake
-CPMAddPackage("gh:jan-moeller/ctrx@1.0.0")
+CPMAddPackage("gh:jan-moeller/ctrx@1.1.0")
 target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
 ```
 
 Don't set any options in this case, since you don't know what your user wants.
 
+
+In all other cases, you can set the mode via CMakeCache as appropriate, and
+CMake will rebuild all source dependencies with that mode set.
