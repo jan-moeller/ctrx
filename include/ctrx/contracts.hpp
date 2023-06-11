@@ -40,30 +40,30 @@
 #define CTRX_DETAIL_MODE_NUM_HANDLER 5
 
 // Definition of what the different modes do
-#define CTRX_DETAIL_MODE_OFF(TYPE, ...)
-#define CTRX_DETAIL_MODE_ASSERT(TYPE, ...) assert((__VA_ARGS__))
-#define CTRX_DETAIL_MODE_ASSUME(TYPE, ...) [[assume(__VA_ARGS__)]]
-#define CTRX_DETAIL_MODE_THROW(TYPE, ...)                                                                              \
+#define CTRX_DETAIL_MODE_OFF(TYPE, MSG, ...)
+#define CTRX_DETAIL_MODE_ASSERT(TYPE, MSG, ...) assert((__VA_ARGS__))
+#define CTRX_DETAIL_MODE_ASSUME(TYPE, MSG, ...) [[assume(__VA_ARGS__)]]
+#define CTRX_DETAIL_MODE_THROW(TYPE, MSG, ...)                                                                         \
     do                                                                                                                 \
     {                                                                                                                  \
         if (!(__VA_ARGS__))                                                                                            \
-            throw CTRX_DETAIL_MODE_THROW_EXCEPTION(TYPE){#TYPE " failure: " #__VA_ARGS__,                              \
+            throw CTRX_DETAIL_MODE_THROW_EXCEPTION(TYPE){#TYPE " failure: " #__VA_ARGS__ MSG,                          \
                                                          std::source_location::current()};                             \
     } while (false)
-#define CTRX_DETAIL_MODE_TERMINATE(TYPE, ...)                                                                          \
+#define CTRX_DETAIL_MODE_TERMINATE(TYPE, MSG, ...)                                                                     \
     do                                                                                                                 \
     {                                                                                                                  \
         if (!(__VA_ARGS__))                                                                                            \
             std::terminate();                                                                                          \
     } while (false)
-#define CTRX_DETAIL_MODE_HANDLER(TYPE, ...)                                                                            \
+#define CTRX_DETAIL_MODE_HANDLER(TYPE, MSG, ...)                                                                       \
     do                                                                                                                 \
     {                                                                                                                  \
         if (std::is_constant_evaluated())                                                                              \
             assert((__VA_ARGS__));                                                                                     \
         else if (!(__VA_ARGS__))                                                                                       \
             ::ctrx::handle_contract_violation(CTRX_DETAIL_TYPE_ENUM(TYPE),                                             \
-                                              #__VA_ARGS__,                                                            \
+                                              #__VA_ARGS__ MSG,                                                        \
                                               std::source_location::current());                                        \
                                                                                                                        \
     } while (false)
@@ -173,12 +173,17 @@
 // Some helpers used below
 #define CTRX_DETAIL_GET_CONFIG_MODE(TYPE) CTRX_DETAIL_CONCAT2(CTRX_CONFIG_MODE_, TYPE)
 #define CTRX_DETAIL_CHECK_FN(TYPE) CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_, CTRX_DETAIL_GET_CONFIG_MODE(TYPE))
-#define CTRX_DETAIL_CHECK(TYPE, ...) CTRX_DETAIL_CHECK_FN(TYPE)(TYPE, __VA_ARGS__)
+#define CTRX_DETAIL_CHECK(TYPE, MSG, ...) CTRX_DETAIL_CHECK_FN(TYPE)(TYPE, CTRX_DETAIL_FORMAT_MSG(MSG), __VA_ARGS__)
+#define CTRX_DETAIL_FORMAT_MSG(...) "" __VA_OPT__(" (" __VA_ARGS__ ")")
 
 // The main macros
-#define CTRX_PRECONDITION(...) CTRX_DETAIL_CHECK(PRECONDITION, __VA_ARGS__)
-#define CTRX_POSTCONDITION(...) CTRX_DETAIL_CHECK(POSTCONDITION, __VA_ARGS__)
-#define CTRX_ASSERT(...) CTRX_DETAIL_CHECK(ASSERTION, __VA_ARGS__)
+#define CTRX_PRECONDITION_M(MSG, ...) CTRX_DETAIL_CHECK(PRECONDITION, MSG, __VA_ARGS__)
+#define CTRX_POSTCONDITION_M(MSG, ...) CTRX_DETAIL_CHECK(POSTCONDITION, MSG, __VA_ARGS__)
+#define CTRX_ASSERT_M(MSG, ...) CTRX_DETAIL_CHECK(ASSERTION, MSG, __VA_ARGS__)
+
+#define CTRX_PRECONDITION(...) CTRX_PRECONDITION_M(, __VA_ARGS__)
+#define CTRX_POSTCONDITION(...) CTRX_POSTCONDITION_M(, __VA_ARGS__)
+#define CTRX_ASSERT(...) CTRX_ASSERT_M(, __VA_ARGS__)
 
 // Define handler entry point if required
 #if CTRX_DETAIL_CONCAT2(CTRX_DETAIL_MODE_NUM_, CTRX_CONFIG_MODE_PRECONDITION) == CTRX_DETAIL_MODE_NUM_HANDLER          \
