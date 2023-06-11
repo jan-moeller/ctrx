@@ -31,7 +31,7 @@ CPMAddPackage(
         SOURCE_DIR ${CMAKE_CURRENT_LIST_DIR}/..
         OPTIONS "CTRX_CONFIG_MODE THROW"
 )
-CPMAddPackage("gh:jan-moeller/bugspray@0.2.0")
+CPMAddPackage("gh:jan-moeller/bugspray@0.3.1")
 
 include(CTest)
 enable_testing()
