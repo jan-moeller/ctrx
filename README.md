@@ -196,7 +196,7 @@ If you're writing an executable and you absolutely require one specific mode:
 ```cmake
 CPMAddPackage(
         NAME ctrx
-        VERSION 1.1.0
+        VERSION 1.3.0
         GITHUB_REPOSITORY jan-moeller/ctrx
         OPTIONS "CTRX_CONFIG_MODE THROW" "CTRX_CONFIG_LEVEL AUDIT"
 ) # Or set whatever options you like
@@ -206,7 +206,7 @@ target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
 If you're writing a library:
 
 ```cmake
-CPMAddPackage("gh:jan-moeller/ctrx@1.1.0")
+CPMAddPackage("gh:jan-moeller/ctrx@1.3.0")
 target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
 ```
 
