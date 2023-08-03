@@ -24,6 +24,7 @@ CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.11.0")
 #############################################################################################################
 # Build configuration
 #############################################################################################################
+set(CTRX_CONFIG_LEVEL CACHE STRING "Set on of the ctrx levels: DEFAULT, AXIOM")
 set(CTRX_CONFIG_MODE CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER")
 set(CTRX_CONFIG_MODE_PRECONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
 set(CTRX_CONFIG_MODE_POSTCONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
@@ -33,6 +34,7 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "    ${PROJECT_NAME} (${PROJECT_VERSION})")
 message(STATUS "------------------------------------------------------------------------------")
 message(STATUS "Build type:                ${CMAKE_BUILD_TYPE}")
+message(STATUS "Level:                     ${CTRX_CONFIG_LEVEL}")
 message(STATUS "Global mode:               ${CTRX_CONFIG_MODE}")
 message(STATUS "  - Precondition mode:     ${CTRX_CONFIG_MODE_PRECONDITION}")
 message(STATUS "  - Postcondition mode:    ${CTRX_CONFIG_MODE_POSTCONDITION}")
@@ -49,12 +51,19 @@ add_library(${PROJECT_NAME} INTERFACE
         include/ctrx/exceptions/contract_violation.hpp
         include/ctrx/exceptions/postcondition_violation.hpp
         include/ctrx/exceptions/precondition_violation.hpp
+        test/test_level_default.cpp
+        test/test_level_audit.cpp
+        test/test_level_axiom.cpp
+        test/test_contract_macro.cpp
 )
 target_include_directories(
         ${PROJECT_NAME} INTERFACE
         $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include>
         $<INSTALL_INTERFACE:include/${PROJECT_NAME}-${PROJECT_VERSION}>
 )
+if (NOT CTRX_CONFIG_LEVEL STREQUAL "")
+    target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_LEVEL=${CTRX_CONFIG_LEVEL})
+endif ()
 if (NOT CTRX_CONFIG_MODE STREQUAL "")
     target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_MODE=${CTRX_CONFIG_MODE})
 endif ()

@@ -57,9 +57,13 @@ function(create_test name)
     add_test(NAME ${TEST_EXEC_NAME} COMMAND ${TEST_EXEC_NAME})
 endfunction()
 
+create_test(contract_macro)
 create_test(mode_off)
 create_test(mode_throw)
 create_test(mode_handler)
+create_test(level_default)
+create_test(level_audit)
+create_test(level_axiom)
 create_test(fibonacci)
 create_test(with_messages)
 
