@@ -25,24 +25,43 @@
 
 #include <bugspray/bugspray.hpp>
 
-void type_level_message_condition()
+void type_condition_level_message()
 {
-    CTRX_CONTRACT(ASSERTION, DEFAULT, "a message", false);
+    CTRX_CONTRACT(assertion, false, default, "a message");
 }
 
-void type_level_condition()
+void type_condition_level()
 {
-    CTRX_CONTRACT(ASSERTION, DEFAULT, false);
+    CTRX_CONTRACT(assertion, false, default);
 }
 
 void type_condition()
+{
+    CTRX_CONTRACT(assertion, false);
+}
+
+void type_condition_level_message_caps()
+{
+    CTRX_CONTRACT(ASSERTION, false, DEFAULT, "a message");
+}
+
+void type_condition_level_caps()
+{
+    CTRX_CONTRACT(ASSERTION, false, DEFAULT);
+}
+
+void type_condition_caps()
 {
     CTRX_CONTRACT(ASSERTION, false);
 }
 
 TEST_CASE("contract macro", "[ctrx]", runtime)
 {
-    CHECK_THROWS_AS(ctrx::assertion_violation, type_level_message_condition());
-    CHECK_THROWS_AS(ctrx::assertion_violation, type_level_condition());
+    CHECK_THROWS_AS(ctrx::assertion_violation, type_condition_level_message());
+    CHECK_THROWS_AS(ctrx::assertion_violation, type_condition_level());
     CHECK_THROWS_AS(ctrx::assertion_violation, type_condition());
+
+    CHECK_THROWS_AS(ctrx::assertion_violation, type_condition_level_message_caps());
+    CHECK_THROWS_AS(ctrx::assertion_violation, type_condition_level_caps());
+    CHECK_THROWS_AS(ctrx::assertion_violation, type_condition_caps());
 }

@@ -28,15 +28,15 @@
 
 void precondition_failure()
 {
-    CTRX_PRECONDITION(DEFAULT, false);
+    CTRX_PRECONDITION(false, default);
 }
 void postcondition_failure()
 {
-    CTRX_POSTCONDITION(AUDIT, false);
+    CTRX_POSTCONDITION(false, audit);
 }
 void assertion_failure()
 {
-    CTRX_ASSERT(AXIOM, false);
+    CTRX_ASSERT(false, axiom);
 }
 
 TEST_CASE("level: axiom", "[ctrx]", runtime)

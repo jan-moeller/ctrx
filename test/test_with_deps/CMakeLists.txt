@@ -27,15 +27,15 @@ set_target_properties(libinterface PROPERTIES CXX_STANDARD 20)
 target_include_directories(libinterface INTERFACE .)
 
 add_library(libstatic STATIC libstatic.cpp)
-target_link_libraries(libstatic PUBLIC ctrx::ctrx libinterface)
+target_link_libraries(libstatic PUBLIC libinterface PRIVATE ctrx::ctrx)
 set_target_properties(libstatic PROPERTIES CXX_STANDARD 20)
 
 add_library(libshared SHARED libshared.cpp)
-target_link_libraries(libshared PUBLIC ctrx::ctrx libinterface)
+target_link_libraries(libshared PUBLIC libinterface PRIVATE ctrx::ctrx)
 set_target_properties(libshared PROPERTIES CXX_STANDARD 20)
 
 add_executable(ctrx-test-with-deps complex_test.cpp)
-target_link_libraries(ctrx-test-with-deps PUBLIC ctrx::ctrx libinterface bugspray-with-main libstatic libshared)
+target_link_libraries(ctrx-test-with-deps PUBLIC libinterface bugspray-with-main libstatic libshared PRIVATE ctrx::ctrx)
 set_target_properties(ctrx-test-with-deps PROPERTIES
         CXX_STANDARD 20
         CXX_STANDARD_REQUIRED YES

@@ -2,9 +2,10 @@
 
 [![GCC](https://github.com/jan-moeller/ctrx/actions/workflows/gcc.yml/badge.svg)](https://github.com/jan-moeller/ctrx/actions/workflows/gcc.yml)
 
-This is a macro-based contracts stand-in while we're waiting for official
-language support. It provides precondition, postcondition, and assertion
-checking, and has several modes that can be selected at compile time.
+This is a macro-based contracts checking library while we're waiting for official
+language support. It provides precondition, postcondition, and assertion checking,
+has several contract levels that can be selected at compile time, and allows the
+application to implement a custom violation handler.
 
 ## Example
 
@@ -16,14 +17,14 @@ with the following iterative solution:
 
 auto fib(int n) -> int
 {
-    CTRX_PRECONDITION(n > 0);
+    CTRX_PRECONDITION(n > 0, default, "Fibonacci numbers start with 1!");
 
     int second_last = 1;
     int last        = 1;
     for (int i = 2; i < n; ++i)
     {
         second_last = std::exchange(last, second_last + last);
-        CTRX_ASSERT(second_last < last);
+        CTRX_ASSERT(second_last < last, audit);
     }
 
     int const r = last;
@@ -33,46 +34,81 @@ auto fib(int n) -> int
 }
 ```
 
-Now, this function has a precondition, because the fibonacci numbers start with
-1 (at least in the classic definition). Since the implementation has some
-complexity, we would like to add some assertions half-way, to make sure we stay
-sane, and we also want to verify the postcondition that the result is greater or
-equal to 1.
+This function has a precondition, because the fibonacci numbers start with 1 (at
+least in the classic definition). Since the implementation has some complexity,
+we added an assertion in the middle as a sanity-check, and we also want to verify
+that the result is in the right ballpark (greater or equal to 1, in this case).
 
-By default, all these checks are identical to C's good old `assert()`. However,
-CTRX provides several other modes. In particular, checking of preconditions,
-postconditions and assertions can be turned on and off individually.
+The application implementer can independently decide how these checks should be
+handled based on contract type and level.
 
-## Build Levels
+## API
+
+The library provides 4 central macros:
+
+```c++
+CTRX_CONTRACT(type, condition, [level], [message])
+CTRX_PRECONDITION(condition, [level], [message])
+CTRX_POSTCONDITION(condition, [level], [message])
+CTRX_ASSERT(condition, [level], [message])
+```
+
+### Arguments
+
+| Name        | Mandatory | Description                                                                                                         | Notes                                                                                                                      |
+|-------------|-----------|---------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
+| `type`      | ✔         | One of: <br> - `PRECONDITION`, `precondition`<br> - `POSTCONDITION`, `postcondition` <br> - `ASSERTION` `assertion` | It is usually better to use one of the macros not taking this parameter.                                                   |
+| `condition` | ✔         | Must be a valid expression.                                                                                         | If the expression contains commas, it needs to be wrapped in an additional set of parentheses to satisfy the preprocessor. |  
+| `level`     | ✘         | One of: <br> - `DEFAULT`, `default` <br> - `AUDIT`, `audit` <br> - `AXIOM`, `axiom`                                 | Defaults to `default`. See below for the meaning of these contract levels.                                                 |
+| `message`   | ✘         | Optional explanatory string literal. Some build modes use it to augment the error report.                           |                                                                                                                            |
+
+*Important*: This library makes no guarantees as to how often the condition is
+evaluated - this may also depend on build mode. You should therefore never use
+expressions with side effects in a contract check!
+
+## Build Time Configuration
+
+CTRX has the following build-time configuration macros:
+
+| Macro                             | Default             | Description                                                                                             | Notes                                             |
+|-----------------------------------|---------------------|---------------------------------------------------------------------------------------------------------|---------------------------------------------------|
+| `CTRX_CONFIG_LEVEL`               | `DEFAULT`           | One of: <br> - `OFF` <br> - `DEFAULT` <br> - `AUDIT`                                                    |                                                   |
+| `CTRX_CONFIG_LEVEL_PRECONDITION`  | `CTRX_CONFIG_LEVEL` | One of: <br> - `OFF` <br> - `DEFAULT` <br> - `AUDIT`                                                    | Overrides `CTRX_CONFIG_LEVEL` for preconditions.  |
+| `CTRX_CONFIG_LEVEL_POSTCONDITION` | `CTRX_CONFIG_LEVEL` | One of: <br> - `OFF` <br> - `DEFAULT` <br> - `AUDIT`                                                    | Overrides `CTRX_CONFIG_LEVEL` for postconditions. |
+| `CTRX_CONFIG_LEVEL_ASSERTION`     | `CTRX_CONFIG_LEVEL` | One of: <br> - `OFF` <br> - `DEFAULT` <br> - `AUDIT`                                                    | Overrides `CTRX_CONFIG_LEVEL` for assertions.     |
+| `CTRX_CONFIG_MODE`                | `ASSERT`            | One of: <br> - `OFF` <br> - `ASSERT` <br> - `ASSUME` <br> - `THROW` <br> - `TERMINATE` <br> - `HANDLER` |                                                   |
+| `CTRX_CONFIG_MODE_PRECONDITION`   | `CTRX_CONFIG_MODE`  | One of: <br> - `OFF` <br> - `ASSERT` <br> - `ASSUME` <br> - `THROW` <br> - `TERMINATE` <br> - `HANDLER` | Overrides `CTRX_CONFIG_MODE` for preconditions.   |
+| `CTRX_CONFIG_MODE_POSTCONDITION`  | `CTRX_CONFIG_MODE`  | One of: <br> - `OFF` <br> - `ASSERT` <br> - `ASSUME` <br> - `THROW` <br> - `TERMINATE` <br> - `HANDLER` | Overrides `CTRX_CONFIG_MODE` for postconditions.  |
+| `CTRX_CONFIG_MODE_ASSERTION`      | `CTRX_CONFIG_MODE`  | One of: <br> - `OFF` <br> - `ASSERT` <br> - `ASSUME` <br> - `THROW` <br> - `TERMINATE` <br> - `HANDLER` | Overrides `CTRX_CONFIG_MODE` for assertions.      |
+
+### Build Levels
 
 Contracts can be annotated with a level. At build time, this allows you to turn
-off expensive checks.
+off expensive checks. The following table lists whether checks are turned on or
+off according to their contract level and the global build level:
 
-| Build Level ↴ \ Contract Level → | DEFAULT | AUDIT | AXIOM |
-|----------------------------------|---------|-------|-------|
-| DEFAULT                          | ✔       | ✘     | ✘     |
-| AUDIT                            | ✔       | ✔     | ✘     |
+| Build Level ↴ \ Contract Level → | `DEFAULT` | `AUDIT` | `AXIOM` |
+|----------------------------------|-----------|---------|---------|
+| `DEFAULT`                        | ✔         | ✘       | ✘       |
+| `AUDIT`                          | ✔         | ✔       | ✘       |
 
-### DEFAULT
+In other words, the `DEFAULT` build level enables checking of all `DEFAULT`
+contracts, and the `AUDIT` build level enables checking of all `DEFAULT` and
+`AUDIT` contracts. Contracts with `AXIOM` level are never checked and serve as
+formal comments.
 
-Enables checking of all `DEFAULT` contracts.
+### Build Modes
 
-### AUDIT
-
-Enables checking of all `DEFAULT` and `AUDIT` contracts.
-
-## Build Modes
-
-### OFF
+#### OFF
 
 Turns off checking completely. You might want to choose this in release builds.
 
-### ASSERT
+#### ASSERT
 
 Uses C's `assert()` macro under the hood, which implies no checking in release
 builds, and implementation defined checking in debug builds.
 
-### ASSUME
+#### ASSUME
 
 Uses C++23's attribute `[[assume()]]`. Note that this doesn't check at all, but
 uses the contract for optimization, potentially introducing *more* UB rather
@@ -80,20 +116,26 @@ than reducing it. Use this for release builds if performance matters most,
 you're really, *really* sure you never call anything out of contract, and
 you're feeling particularly adventurous today.
 
-### THROW
+#### THROW
 
 Throws exceptions on contract violations, namely `ctrx::precondition_violation`,
 `ctrx::postcondition_violation` and `ctrx::assertion_violation`. All of these
 exceptions inherit from `ctrx::contract_violation`, which can be used as a
-catch-all. Use this mode for unit-testing out-of-contract calls.
+catch-all. `ctrx::contract_violation` inherits from `std::exception`. Use this
+mode for unit-testing out-of-contract calls.
 
-### TERMINATE
+Note that, if you need to throw a different exception type, you can do so using
+the `HANDLER` mode.
+
+See below for a full description of these exception types.
+
+#### TERMINATE
 
 This mode just calls `std::terminate` on contract violations. Maybe this is
 useful if you can afford to crash, but you cannot afford to continue running
 out-of-contract.
 
-### HANDLER
+#### HANDLER
 
 This is the most general mode; it allows you to implement your own contract
 violation handler. This can be used for logging, and you can decide whether you
@@ -103,11 +145,26 @@ You have to implement a function with the following signature as handler:
 ```c++
 namespace ctrx
 {
-void handle_contract_violation(contract_type, char const*, std::source_location const&);
+void handle_contract_violation(contract_type type, char const* msg, std::source_location const& sloc);
 } // namespace ctrx
 ```
 
-Here, `contract_type` is defined by `contracts.hpp` like this:
+- The `type` argument determines the type of the failed contract check.
+- The `msg` is a descriptive string of the failed contract check.
+- The `sloc` is the source location where the contract violation occurred.
+
+## Constant Evaluation
+
+Generally, contract checks can be used in `constexpr` and `consteval` functions.
+However, in most modes, a failed contract check during constant evaluation results
+in an immediate compilation error. The only guaranteed exception is if the
+build mode is `OFF` - in this case, no diagnostic is issued and constant
+evaluation continues as if the contract wasn't violated.
+
+## Conditionally Defined Types
+
+The following types are made available only if required by the currently set build
+mode:
 
 ```c++
 namespace ctrx
@@ -118,99 +175,95 @@ enum class contract_type
     postcondition,
     assertion,
 };
+    
+struct contract_violation : public std::exception
+{
+    [[nodiscard]] constexpr auto type() const noexcept -> contract_type;
+    [[nodiscard]] constexpr auto source_location() const noexcept -> std::source_location const&;
+    [[nodiscard]] inline auto what() const noexcept -> char const* override;
+};
+struct precondition_violation : contract_violation;
+struct postcondition_violation : contract_violation;
+struct assertion_violation : contract_violation;
 } // namespace ctrx
 ```
 
-The second function argument is a stringified version of the failed contract,
-and the third argument is the source location where the contract violation
-occurred.
+## How To Use
 
-Note that the `HANDLER` mode falls back to `ASSERT` mode during constant
-evaluation. This is because (for obvious reasons) it isn't possible to call
-`extern` functions during constant evaluation.
+CTRX is a header-only library, so in theory you could just drop the `include/ctrx`
+folder in your project and start using it. `#include "ctrx/contracts.hpp"` to get
+the main macros.
 
-## Usage
+### CMake Integration
 
-CTRX uses pre-processor macros for its configuration. You could `#define` them
-just prior to `#include`ing `ctrx/contracts.hpp`, but it's easier to define them
-globally, and if you're using cmake, then this project allows you to easily do
-that.
+CTRX makes itself available as `ctrx::ctrx` to cmake targets. All you need to do
+is
 
-* `CTRX_CONFIG_LEVEL` \
-  Can be set to one of the build levels listed above. Defaults to `DEFAULT`.
-* `CTRX_CONFIG_MODE` \
-  Can be used to set the mode globally, i.e. for preconditions, postconditions,
-  and assertions all at once. Must be defined to be one of the build modes
-  above, or can be left undefined, in which case it defaults to `ASSERT`.
-* `CTRX_CONFIG_MODE_PRECONDITION` \
-  Set the mode for preconditions only. Defaults to `CTRX_CONFIG_MODE`.
-* `CTRX_CONFIG_MODE_POSTCONDITION` \
-  Set the mode for postconditions only. Defaults to `CTRX_CONFIG_MODE`.
-* `CTRX_CONFIG_MODE_ASSERTION` \
-  Set the mode for assertions only. Defaults to `CTRX_CONFIG_MODE`.
+```cmake
+target_link_libraries(YOUR_TARGET PRIVATE ctrx::ctrx)
+```
 
-The library provides these macros:
+#### Cache Variables
 
-* `CTRX_CONTRACT(type, level, message, condition)` \
-  This is the central macro, however, it probably shouldn't be used directly.
-  Instead, prefer one of the specialized macros below.
-    + `type` \
-      Must be one of `PRECONDITION`, `POSTCONDITION`, or `ASSERTION`
-    + `level` \
-      Optional. If set, must be one of `DEFAULT`, `AUDIT`, or `AXIOM`. Defaults to
-      `DEFAULT`.
-    + `message` \
-      Optional. If set, must be a string literal. \
-      Note that, if the macro is called with 3 arguments, the second one is assumed
-      to be level. If you want to provide a message and keep the level at default,
-      use the _M variant below.
-    + `condition` \
-      The condition to check. Must be convertible to `bool`. \
-      Note that, if your condition contains commas, you have to wrap it in additional
-      parentheses.
-* `CTRX_CONTRACT_M(type, message, condition)` \
-  Analogous to `CTRX_CONTRACT`, but allows providing a message while using the
-  default `level`.
-* `CTRX_PRECONDITION(level, message, condition)` \
-  Identical to `CTRX_CONTRACT(PRECONDITION, level, message, condition)`, with
-  `level` and `message` being optional.
-* `CTRX_PRECONDITION_M(message, condition)` \
-  Identical to `CTRX_CONTRACT_M(PRECONDITION, message, condition)`.
-* `CTRX_POSTCONDITION(level, message, condition)` \
-  Identical to `CTRX_CONTRACT(POSTCONDITION, level, message, condition)`, with
-  `level` and `message` being optional.
-* `CTRX_POSTCONDITION_M(message, condition)` \
-  Identical to `CTRX_CONTRACT_M(POSTCONDITION, message, condition)`.
-* `CTRX_ASSERT(level, message, condition)` \
-  Identical to `CTRX_CONTRACT(ASSERTION, level, message, condition)`, with
-  `level` and `message` being optional.
-* `CTRX_ASSERT_M(message, condition)` \
-  Identical to `CTRX_CONTRACT_M(ASSERTION, message, condition)`.
+The following cache variables are available to conveniently change the build mode
+and level:
 
-## CMake Integration
+- CTRX_CONFIG_LEVEL
+- CTRX_CONFIG_LEVEL_PRECONDITION
+- CTRX_CONFIG_LEVEL_POSTCONDITION
+- CTRX_CONFIG_LEVEL_ASSERTION
+- CTRX_CONFIG_MODE
+- CTRX_CONFIG_MODE_PRECONDITION
+- CTRX_CONFIG_MODE_POSTCONDITION
+- CTRX_CONFIG_MODE_ASSERTION
 
-It's easiest using cmake with [CPM](https://github.com/cpm-cmake/CPM.cmake).
+These intentionally have the same names as the preprocessor macros they set.
 
-If you're writing an executable and you absolutely require one specific mode:
+#### CPM
+
+If you're using [CPM](https://github.com/cpm-cmake/CPM.cmake), you can use CTRX like this:
+
+```cmake
+CPMAddPackage("gh:jan-moeller/ctrx@1.4.0")
+target_link_libraries(YOUR_TARGET PRIVATE ctrx::ctrx)
+```
+
+Note that you can also configure CTRX this way:
 
 ```cmake
 CPMAddPackage(
         NAME ctrx
-        VERSION 1.3.0
+        VERSION 1.4.0
         GITHUB_REPOSITORY jan-moeller/ctrx
         OPTIONS "CTRX_CONFIG_MODE THROW" "CTRX_CONFIG_LEVEL AUDIT"
 ) # Or set whatever options you like
-target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
+target_link_libraries(YOUR_EXECUTABLE_TARGET PUBLIC ctrx::ctrx)
 ```
 
-If you're writing a library:
+However, this should only be done if you are implementing an application (as
+opposed to a library). See the recommendations section below for further
+discussion.
 
-```cmake
-CPMAddPackage("gh:jan-moeller/ctrx@1.3.0")
-target_link_libraries(YOUR_TARGET PUBLIC ctrx::ctrx)
-```
+## Recommended Use
 
-Don't set any options in this case, since you don't know what your user wants.
-
-In all other cases, you can set the mode via CMakeCache as appropriate, and
-CMake will rebuild all source dependencies with that mode set.
+1. If you are writing a library, do not set any configuration - this choice has
+   to be made by the application using your library. The reason is that, as a
+   library author, you don't know in what context your library is going to be
+   used.
+   Note that your unit test application is an application, and probably should
+   set a configuration convenient for unit testing (see below).
+2. If a check is costly compared to what the function does (e.g. the check is
+   more expensive than the function itself), tag it as `audit`.
+3. If a check is in a frequent path, e.g. a tight loop, tag it as `audit` as
+   well.
+4. It is advisable to compile your unit tests with all checks turned on and in
+   `THROW` mode - virtually all unit test frameworks treat an escaped exception
+   as a test failure. Therefore, your tests will fail if any contract violation
+   occured, and give you a nice message of what went wrong.
+5. Be very careful about the `ASSUME` mode. Few software is free of bugs, and
+   this mode has the ability to make your application behave much worse than it
+   did without it.
+6. You will find that you can rarely exactly check your postconditions. That's
+   okay, your unit tests will cover that case. But it sometimes pays off to at
+   least check the bounds of the return value.
+7. Never have side effects in your contract checks.

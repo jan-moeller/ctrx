@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.14)
 project(ctrx
-        VERSION 1.3.0
+        VERSION 1.4.0
         LANGUAGES CXX
 )
 
@@ -24,7 +24,10 @@ CPMAddPackage("gh:TheLartians/PackageProject.cmake@1.11.0")
 #############################################################################################################
 # Build configuration
 #############################################################################################################
-set(CTRX_CONFIG_LEVEL CACHE STRING "Set on of the ctrx levels: DEFAULT, AXIOM")
+set(CTRX_CONFIG_LEVEL CACHE STRING "Set on of the ctrx levels: OFF, DEFAULT, AXIOM")
+set(CTRX_CONFIG_LEVEL_PRECONDITION CACHE STRING "Set on of the ctrx levels: OFF, DEFAULT, AXIOM (or leave empty to use global level)")
+set(CTRX_CONFIG_LEVEL_POSTCONDITION CACHE STRING "Set on of the ctrx levels: OFF, DEFAULT, AXIOM (or leave empty to use global level)")
+set(CTRX_CONFIG_LEVEL_ASSERTION CACHE STRING "Set on of the ctrx levels: OFF, DEFAULT, AXIOM (or leave empty to use global level)")
 set(CTRX_CONFIG_MODE CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER")
 set(CTRX_CONFIG_MODE_PRECONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
 set(CTRX_CONFIG_MODE_POSTCONDITION CACHE STRING "Set one of the ctrx modes: OFF, ASSERT, ASSUME, THROW, TERMINATE, HANDLER (or leave empty to use global mode)")
@@ -34,7 +37,10 @@ message(STATUS "----------------------------------------------------------------
 message(STATUS "    ${PROJECT_NAME} (${PROJECT_VERSION})")
 message(STATUS "------------------------------------------------------------------------------")
 message(STATUS "Build type:                ${CMAKE_BUILD_TYPE}")
-message(STATUS "Level:                     ${CTRX_CONFIG_LEVEL}")
+message(STATUS "Global level               ${CTRX_CONFIG_LEVEL}")
+message(STATUS "  - Precondition level:    ${CTRX_CONFIG_LEVEL_PRECONDITION}")
+message(STATUS "  - Postcondition level:   ${CTRX_CONFIG_LEVEL_POSTCONDITION}")
+message(STATUS "  - Assertion level:       ${CTRX_CONFIG_LEVEL_ASSERTION}")
 message(STATUS "Global mode:               ${CTRX_CONFIG_MODE}")
 message(STATUS "  - Precondition mode:     ${CTRX_CONFIG_MODE_PRECONDITION}")
 message(STATUS "  - Postcondition mode:    ${CTRX_CONFIG_MODE_POSTCONDITION}")
@@ -51,10 +57,10 @@ add_library(${PROJECT_NAME} INTERFACE
         include/ctrx/exceptions/contract_violation.hpp
         include/ctrx/exceptions/postcondition_violation.hpp
         include/ctrx/exceptions/precondition_violation.hpp
-        test/test_level_default.cpp
+        test/test_contract_macro.cpp
         test/test_level_audit.cpp
         test/test_level_axiom.cpp
-        test/test_contract_macro.cpp
+        test/test_level_default.cpp
 )
 target_include_directories(
         ${PROJECT_NAME} INTERFACE
@@ -63,6 +69,15 @@ target_include_directories(
 )
 if (NOT CTRX_CONFIG_LEVEL STREQUAL "")
     target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_LEVEL=${CTRX_CONFIG_LEVEL})
+endif ()
+if (NOT CTRX_CONFIG_LEVEL_PRECONDITION STREQUAL "")
+    target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_LEVEL_PRECONDITION=${CTRX_CONFIG_LEVEL_PRECONDITION})
+endif ()
+if (NOT CTRX_CONFIG_LEVEL_POSTCONDITION STREQUAL "")
+    target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_LEVEL_POSTCONDITION=${CTRX_CONFIG_LEVEL_POSTCONDITION})
+endif ()
+if (NOT CTRX_CONFIG_LEVEL_ASSERTION STREQUAL "")
+    target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_LEVEL_ASSERTION=${CTRX_CONFIG_LEVEL_ASSERTION})
 endif ()
 if (NOT CTRX_CONFIG_MODE STREQUAL "")
     target_compile_definitions(${PROJECT_NAME} INTERFACE CTRX_CONFIG_MODE=${CTRX_CONFIG_MODE})

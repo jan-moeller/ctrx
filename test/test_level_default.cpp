@@ -28,15 +28,20 @@
 
 void precondition_failure()
 {
-    CTRX_PRECONDITION(DEFAULT, "", false);
+    CTRX_PRECONDITION(false, default, "");
 }
 void postcondition_failure()
 {
-    CTRX_POSTCONDITION(AUDIT, "", false);
+    CTRX_POSTCONDITION(false, audit, "");
+}
+void assertion_failure()
+{
+    CTRX_ASSERT(false, axiom);
 }
 
 TEST_CASE("level: default", "[ctrx]", runtime)
 {
     CHECK_THROWS_AS(ctrx::precondition_violation, precondition_failure());
     CHECK_NOTHROW(postcondition_failure());
+    CHECK_NOTHROW(assertion_failure());
 }

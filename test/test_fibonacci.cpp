@@ -29,14 +29,14 @@
 
 auto fib(int n) -> int
 {
-    CTRX_PRECONDITION(n > 0);
+    CTRX_PRECONDITION(n > 0, default, "Fibonacci numbers start with 1!");
 
     int second_last = 1;
     int last        = 1;
     for (int i = 2; i < n; ++i)
     {
         second_last = std::exchange(last, second_last + last);
-        CTRX_ASSERT(second_last < last);
+        CTRX_ASSERT(second_last < last, audit);
     }
 
     int const r = last;

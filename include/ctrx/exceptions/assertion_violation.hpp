@@ -31,7 +31,7 @@ namespace ctrx
 {
 struct assertion_violation : contract_violation
 {
-    constexpr explicit assertion_violation(char const* what, std::source_location sloc)
+    inline explicit assertion_violation(char const* what, std::source_location sloc)
         : contract_violation(contract_type::assertion, what, std::move(sloc))
     {
     }

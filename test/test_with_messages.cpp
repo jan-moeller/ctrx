@@ -25,43 +25,76 @@
 
 #include <bugspray/bugspray.hpp>
 
-void precondition_failure()
-{
-    CTRX_PRECONDITION_M("foo", false);
-}
-void postcondition_failure()
-{
-    CTRX_POSTCONDITION_M("bar", false);
-}
-void assertion_failure()
-{
-    CTRX_ASSERT_M("baz", false);
-}
+#include <regex>
 
-TEST_CASE("mode: throw", "[ctrx]", runtime)
+TEST_CASE("with messages", "[ctrx]", runtime)
 {
-    try
+    SECTION("with messages")
     {
-        precondition_failure();
+        try
+        {
+            CTRX_PRECONDITION(false, default, "foo");
+        }
+        catch (ctrx::precondition_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(std::regex_match(e.what(),
+                                   std::regex(
+                                       R"(^.*test_with_messages.cpp:36.*PRECONDITION failure: false \(foo\).*$)")));
+        }
+        try
+        {
+            CTRX_POSTCONDITION(false, default, "bar");
+        }
+        catch (ctrx::postcondition_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(std::regex_match(e.what(),
+                                   std::regex(
+                                       R"(^.*test_with_messages.cpp:47.*POSTCONDITION failure: false \(bar\).*$)")));
+        }
+        try
+        {
+            CTRX_ASSERT(false, default, "baz");
+        }
+        catch (ctrx::assertion_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(std::regex_match(e.what(),
+                                   std::regex(R"(^.*test_with_messages.cpp:58.*ASSERTION failure: false \(baz\).*$)")));
+        }
     }
-    catch (ctrx::precondition_violation const& e)
+    SECTION("without messages")
     {
-        CHECK(e.what() == "PRECONDITION failure: false (foo)");
-    }
-    try
-    {
-        postcondition_failure();
-    }
-    catch (ctrx::postcondition_violation const& e)
-    {
-        CHECK(e.what() == "POSTCONDITION failure: false (bar)");
-    }
-    try
-    {
-        assertion_failure();
-    }
-    catch (ctrx::assertion_violation const& e)
-    {
-        CHECK(e.what() == "ASSERTION failure: false (baz)");
+        try
+        {
+            CTRX_PRECONDITION(false, default);
+        }
+        catch (ctrx::precondition_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(std::regex_match(e.what(),
+                                   std::regex(R"(^.*test_with_messages.cpp:71.*PRECONDITION failure: false.*$)")));
+        }
+        try
+        {
+            CTRX_POSTCONDITION(false, default);
+        }
+        catch (ctrx::postcondition_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(std::regex_match(e.what(),
+                                   std::regex(R"(^.*test_with_messages.cpp:81.*POSTCONDITION failure: false.*$)")));
+        }
+        try
+        {
+            CTRX_ASSERT(false, default);
+        }
+        catch (ctrx::assertion_violation const& e)
+        {
+            CAPTURE(e.what());
+            CHECK(
+                std::regex_match(e.what(), std::regex(R"(^.*test_with_messages.cpp:91.*ASSERTION failure: false.*$)")));
+        }
     }
 }

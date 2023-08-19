@@ -28,27 +28,31 @@
 #include "ctrx/contract_type.hpp"
 
 #include <source_location>
+#include <stdexcept>
+#include <string>
 #include <utility>
 
 namespace ctrx
 {
-class contract_violation
+class contract_violation : public std::exception
 {
   public:
-    constexpr explicit contract_violation(contract_type type, char const* what, std::source_location sloc)
+    inline explicit contract_violation(contract_type type, char const* what, std::source_location sloc)
         : m_type(type)
-        , m_what(what)
+        , m_what(std::string(sloc.file_name()) + ":" + std::to_string(sloc.line()) + ":" + std::to_string(sloc.column())
+                 + " " + what + " (in " + sloc.function_name() + ")")
         , m_sloc(std::move(sloc))
     {
     }
 
     [[nodiscard]] constexpr auto type() const noexcept -> contract_type { return m_type; }
-    [[nodiscard]] constexpr auto what() const noexcept -> char const* { return m_what; }
     [[nodiscard]] constexpr auto source_location() const noexcept -> std::source_location const& { return m_sloc; }
+
+    [[nodiscard]] inline auto what() const noexcept -> char const* override { return m_what.c_str(); }
 
   private:
     contract_type        m_type;
-    char const*          m_what;
+    std::string          m_what;
     std::source_location m_sloc;
 };
 } // namespace ctrx

@@ -31,7 +31,7 @@ namespace ctrx
 {
 struct precondition_violation : contract_violation
 {
-    constexpr explicit precondition_violation(char const* what, std::source_location sloc)
+    inline explicit precondition_violation(char const* what, std::source_location sloc)
         : contract_violation(contract_type::assertion, what, std::move(sloc))
     {
     }
