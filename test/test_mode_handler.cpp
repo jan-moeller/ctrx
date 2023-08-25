@@ -27,13 +27,13 @@
 #define CTRX_CONFIG_MODE HANDLER
 #include "ctrx/contracts.hpp"
 
-char const* pre_msg    = nullptr;
-char const* post_msg   = nullptr;
-char const* assert_msg = nullptr;
+std::string pre_msg    = "";
+std::string post_msg   = "";
+std::string assert_msg = "";
 
 namespace ctrx
 {
-void handle_contract_violation(contract_type t, char const* s, std::source_location const&)
+void handle_contract_violation(contract_type t, std::string_view s, std::source_location const&)
 {
     switch (t)
     {
@@ -54,44 +54,44 @@ TEST_CASE("mode: handler", "[ctrx]", runtime)
 {
     SECTION("pre")
     {
-        pre_msg    = nullptr;
-        post_msg   = nullptr;
-        assert_msg = nullptr;
+        pre_msg    = "";
+        post_msg   = "";
+        assert_msg = "";
         CTRX_PRECONDITION(true);
-        CHECK(pre_msg == nullptr);
-        CHECK(post_msg == nullptr);
-        CHECK(assert_msg == nullptr);
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "");
         CTRX_PRECONDITION(false);
         CHECK(pre_msg == "false");
-        CHECK(post_msg == nullptr);
-        CHECK(assert_msg == nullptr);
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "");
     }
     SECTION("post")
     {
-        pre_msg    = nullptr;
-        post_msg   = nullptr;
-        assert_msg = nullptr;
+        pre_msg    = "";
+        post_msg   = "";
+        assert_msg = "";
         CTRX_POSTCONDITION(true);
-        CHECK(pre_msg == nullptr);
-        CHECK(post_msg == nullptr);
-        CHECK(assert_msg == nullptr);
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "");
         CTRX_POSTCONDITION(false);
-        CHECK(pre_msg == nullptr);
+        CHECK(pre_msg == "");
         CHECK(post_msg == "false");
-        CHECK(assert_msg == nullptr);
+        CHECK(assert_msg == "");
     }
     SECTION("assert")
     {
-        pre_msg    = nullptr;
-        post_msg   = nullptr;
-        assert_msg = nullptr;
+        pre_msg    = "";
+        post_msg   = "";
+        assert_msg = "";
         CTRX_ASSERT(true);
-        CHECK(pre_msg == nullptr);
-        CHECK(post_msg == nullptr);
-        CHECK(assert_msg == nullptr);
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "");
         CTRX_ASSERT(false);
-        CHECK(pre_msg == nullptr);
-        CHECK(post_msg == nullptr);
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "");
         CHECK(assert_msg == "false");
     }
 }

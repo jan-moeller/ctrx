@@ -202,6 +202,7 @@
 #endif
 #if defined(CTRX_DETAIL_USING_MODE_HANDLER)
 #include <source_location>
+#include <string_view>
 #endif
 
 // ------------------------------------------------------
@@ -211,7 +212,7 @@
 #if defined(CTRX_DETAIL_USING_MODE_HANDLER)
 namespace ctrx
 {
-extern void handle_contract_violation(contract_type, char const*, std::source_location const&);
+extern void handle_contract_violation(contract_type, std::string_view, std::source_location const&);
 } // namespace ctrx
 #endif
 
