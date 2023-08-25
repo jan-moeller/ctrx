@@ -50,6 +50,12 @@ void handle_contract_violation(contract_type t, std::string_view s, std::source_
 }
 } // namespace ctrx
 
+auto throws() -> bool
+{
+    throw std::runtime_error{"what message"};
+    return true;
+}
+
 TEST_CASE("mode: handler", "[ctrx]", runtime)
 {
     SECTION("pre")
@@ -63,6 +69,10 @@ TEST_CASE("mode: handler", "[ctrx]", runtime)
         CHECK(assert_msg == "");
         CTRX_PRECONDITION(false);
         CHECK(pre_msg == "false");
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "");
+        CTRX_PRECONDITION(throws());
+        CHECK(pre_msg == "throws(): what message");
         CHECK(post_msg == "");
         CHECK(assert_msg == "");
     }
@@ -79,6 +89,10 @@ TEST_CASE("mode: handler", "[ctrx]", runtime)
         CHECK(pre_msg == "");
         CHECK(post_msg == "false");
         CHECK(assert_msg == "");
+        CTRX_POSTCONDITION(throws());
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "throws(): what message");
+        CHECK(assert_msg == "");
     }
     SECTION("assert")
     {
@@ -93,5 +107,9 @@ TEST_CASE("mode: handler", "[ctrx]", runtime)
         CHECK(pre_msg == "");
         CHECK(post_msg == "");
         CHECK(assert_msg == "false");
+        CTRX_ASSERT(throws());
+        CHECK(pre_msg == "");
+        CHECK(post_msg == "");
+        CHECK(assert_msg == "throws(): what message");
     }
 }

@@ -66,5 +66,6 @@ create_test(level_audit)
 create_test(level_axiom)
 create_test(fibonacci)
 create_test(with_messages)
+create_test(throw_in_contract_check)
 
 add_subdirectory(test_with_deps)

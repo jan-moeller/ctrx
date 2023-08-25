@@ -25,46 +25,22 @@
 
 #include <bugspray/bugspray.hpp>
 
-#include <regex>
-
-auto throws() -> bool
-{
-    throw std::runtime_error{"what message"};
-    return true;
-}
-
 void precondition_failure()
 {
-    CTRX_PRECONDITION(false);
+    CTRX_PRECONDITION((throw "foo", true));
 }
 void postcondition_failure()
 {
-    CTRX_POSTCONDITION(false);
+    CTRX_POSTCONDITION((throw "foo", true));
 }
 void assertion_failure()
 {
-    CTRX_ASSERT(false);
-}
-void failure_with_exception()
-{
-    CTRX_ASSERT(throws());
+    CTRX_ASSERT((throw "foo", true));
 }
 
-TEST_CASE("mode: throw", "[ctrx]", runtime)
+TEST_CASE("contract throws", "[ctrx]", runtime)
 {
     CHECK_THROWS_AS(ctrx::precondition_violation, precondition_failure());
     CHECK_THROWS_AS(ctrx::postcondition_violation, postcondition_failure());
     CHECK_THROWS_AS(ctrx::assertion_violation, assertion_failure());
-
-    try
-    {
-        failure_with_exception();
-    }
-    catch (ctrx::assertion_violation const& e)
-    {
-        CAPTURE(e.what());
-        CHECK(std::regex_match(e.what(),
-                               std::regex(
-                                   R"(^.*test_mode_throw\.cpp:.*ASSERTION failure: throws\(\): what message.*$)")));
-    }
 }

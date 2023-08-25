@@ -189,6 +189,9 @@
 // ------------------------------------------------------
 
 #if defined(CTRX_DETAIL_USING_MODE_ASSERT)
+#include <concepts>
+#include <optional>
+
 #include <cassert>
 #endif
 #if defined(CTRX_DETAIL_USING_MODE_THROW)
@@ -196,11 +199,18 @@
 #include "ctrx/exceptions/contract_violation.hpp"
 #include "ctrx/exceptions/postcondition_violation.hpp"
 #include "ctrx/exceptions/precondition_violation.hpp"
+
+#include <concepts>
+#include <optional>
 #endif
 #if defined(CTRX_DETAIL_USING_MODE_TERMINATE)
+#include <concepts>
 #include <exception>
+#include <optional>
 #endif
 #if defined(CTRX_DETAIL_USING_MODE_HANDLER)
+#include <concepts>
+#include <optional>
 #include <source_location>
 #include <string_view>
 #endif
@@ -238,30 +248,53 @@ extern void handle_contract_violation(contract_type, std::string_view, std::sour
 // Implementation of contract checks in all modes
 // ------------------------------------------------------
 
+// Evaluates if a contract check passes (returns an engaged optional with detail message on failure, nullopt on success)
+#define CTRX_DETAIL_EXPR_FAILED(...)                                                                                   \
+    [&]() -> std::optional<std::string>                                                                                \
+    {                                                                                                                  \
+        static_assert(std::convertible_to<decltype(__VA_ARGS__), bool>,                                                \
+                      "contract expression must be convertible to bool");                                              \
+        try                                                                                                            \
+        {                                                                                                              \
+            if (__VA_ARGS__)                                                                                           \
+                return std::nullopt;                                                                                   \
+        }                                                                                                              \
+        catch (std::exception const& e)                                                                                \
+        {                                                                                                              \
+            return std::string(": ") + e.what();                                                                       \
+        }                                                                                                              \
+        catch (...)                                                                                                    \
+        {                                                                                                              \
+            return ": An exception was caught during contract check evaluation";                                       \
+        }                                                                                                              \
+        return "";                                                                                                     \
+    }()
+
 #define CTRX_DETAIL_CHECK_MODE_OFF(TYPE, MSG, ...) CTRX_DETAIL_CHECK_CODE_VALIDITY(__VA_ARGS__)
-#define CTRX_DETAIL_CHECK_MODE_ASSERT(TYPE, MSG, ...) assert((__VA_ARGS__))
+#define CTRX_DETAIL_CHECK_MODE_ASSERT(TYPE, MSG, ...) assert(!CTRX_DETAIL_EXPR_FAILED(__VA_ARGS__))
 #define CTRX_DETAIL_CHECK_MODE_ASSUME(TYPE, MSG, ...) [[assume(__VA_ARGS__)]]
 #define CTRX_DETAIL_CHECK_MODE_THROW(TYPE, MSG, ...)                                                                   \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (!(__VA_ARGS__))                                                                                            \
-            throw CTRX_DETAIL_EXCEPTION_TYPE(TYPE){CTRX_DETAIL_STRINGIFY2(TYPE) " failure: " #__VA_ARGS__ MSG,         \
+        if (auto msg = CTRX_DETAIL_EXPR_FAILED(__VA_ARGS__); msg)                                                      \
+            throw CTRX_DETAIL_EXCEPTION_TYPE(TYPE){CTRX_DETAIL_STRINGIFY2(TYPE) " failure: " #__VA_ARGS__ MSG + *msg,  \
                                                    std::source_location::current()};                                   \
     } while (false)
 #define CTRX_DETAIL_CHECK_MODE_TERMINATE(TYPE, MSG, ...)                                                               \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (!(__VA_ARGS__))                                                                                            \
+        if (CTRX_DETAIL_EXPR_FAILED(__VA_ARGS__))                                                                      \
             std::terminate();                                                                                          \
     } while (false)
 #define CTRX_DETAIL_CHECK_MODE_HANDLER(TYPE, MSG, ...)                                                                 \
     do                                                                                                                 \
     {                                                                                                                  \
-        if (std::is_constant_evaluated())                                                                              \
-            assert((__VA_ARGS__));                                                                                     \
-        else if (!(__VA_ARGS__))                                                                                       \
+        auto msg = CTRX_DETAIL_EXPR_FAILED(__VA_ARGS__);                                                               \
+        if (std::is_constant_evaluated() && msg)                                                                       \
+            std::abort();                                                                                              \
+        else if (msg)                                                                                                  \
             ::ctrx::handle_contract_violation(CTRX_DETAIL_ENUM_TYPE(TYPE),                                             \
-                                              #__VA_ARGS__ MSG,                                                        \
+                                              #__VA_ARGS__ MSG + *msg,                                                 \
                                               std::source_location::current());                                        \
                                                                                                                        \
     } while (false)
