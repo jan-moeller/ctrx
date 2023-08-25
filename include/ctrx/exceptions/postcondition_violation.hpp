@@ -31,7 +31,7 @@ namespace ctrx
 {
 struct postcondition_violation : contract_violation
 {
-    inline explicit postcondition_violation(char const* what, std::source_location sloc)
+    inline explicit postcondition_violation(std::string_view what, std::source_location sloc)
         : contract_violation(contract_type::assertion, what, std::move(sloc))
     {
     }

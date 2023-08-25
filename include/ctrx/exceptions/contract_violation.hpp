@@ -30,6 +30,7 @@
 #include <source_location>
 #include <stdexcept>
 #include <string>
+#include <string_view>
 #include <utility>
 
 namespace ctrx
@@ -37,10 +38,10 @@ namespace ctrx
 class contract_violation : public std::exception
 {
   public:
-    inline explicit contract_violation(contract_type type, char const* what, std::source_location sloc)
+    inline explicit contract_violation(contract_type type, std::string_view what, std::source_location sloc)
         : m_type(type)
         , m_what(std::string(sloc.file_name()) + ":" + std::to_string(sloc.line()) + ":" + std::to_string(sloc.column())
-                 + " " + what + " (in " + sloc.function_name() + ")")
+                 + " " + std::string(what) + " (in " + sloc.function_name() + ")")
         , m_sloc(std::move(sloc))
     {
     }
