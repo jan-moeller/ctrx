@@ -57,10 +57,6 @@ add_library(${PROJECT_NAME} INTERFACE
         include/ctrx/exceptions/contract_violation.hpp
         include/ctrx/exceptions/postcondition_violation.hpp
         include/ctrx/exceptions/precondition_violation.hpp
-        test/test_contract_macro.cpp
-        test/test_level_audit.cpp
-        test/test_level_axiom.cpp
-        test/test_level_default.cpp
 )
 target_include_directories(
         ${PROJECT_NAME} INTERFACE
