@@ -68,3 +68,12 @@ TEST_CASE("mode: throw", "[ctrx]", runtime)
                                    R"(^.*test_mode_throw\.cpp:.*ASSERTION failure: throws\(\): what message.*$)")));
     }
 }
+
+TEST_CASE("mode: throw (constexpr)", "[ctrx]", compiletime)
+{
+    // Can't test negative case since that would be a compile error
+    CTRX_PRECONDITION(true);
+    CTRX_POSTCONDITION(true);
+    CTRX_ASSERT(true);
+}
+EVAL_TEST_CASE("mode: throw (constexpr)");

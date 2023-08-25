@@ -113,3 +113,12 @@ TEST_CASE("mode: handler", "[ctrx]", runtime)
         CHECK(assert_msg == "throws(): what message");
     }
 }
+
+TEST_CASE("mode: handler (constexpr)", "[ctrx]", compiletime)
+{
+    // Can't test negative case since that would be a compile error
+    CTRX_PRECONDITION(true);
+    CTRX_POSTCONDITION(true);
+    CTRX_ASSERT(true);
+}
+EVAL_TEST_CASE("mode: handler (constexpr)");
