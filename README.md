@@ -58,13 +58,26 @@ CTRX_ASSERT(condition, [level], [message])
 | Name        | Mandatory | Description                                                                                                         | Notes                                                                                                                      |
 |-------------|-----------|---------------------------------------------------------------------------------------------------------------------|----------------------------------------------------------------------------------------------------------------------------|
 | `type`      | ✔         | One of: <br> - `PRECONDITION`, `precondition`<br> - `POSTCONDITION`, `postcondition` <br> - `ASSERTION` `assertion` | It is usually better to use one of the macros not taking this parameter.                                                   |
-| `condition` | ✔         | Must be a valid expression.                                                                                         | If the expression contains commas, it needs to be wrapped in an additional set of parentheses to satisfy the preprocessor. |  
+| `condition` | ✔         | Must be a valid expression convertible to `bool`.                                                                   | If the expression contains commas, it needs to be wrapped in an additional set of parentheses to satisfy the preprocessor. |  
 | `level`     | ✘         | One of: <br> - `DEFAULT`, `default` <br> - `AUDIT`, `audit` <br> - `AXIOM`, `axiom`                                 | Defaults to `default`. See below for the meaning of these contract levels.                                                 |
 | `message`   | ✘         | Optional explanatory string literal. Some build modes use it to augment the error report.                           |                                                                                                                            |
 
 *Important*: This library makes no guarantees as to how often the condition is
 evaluated - this may also depend on build mode. You should therefore never use
 expressions with side effects in a contract check!
+
+## Contract Check Behavior
+
+Contracts are considered failed if the condition doesn't return true: That
+includes two cases:
+
+1. the expression returns `false`, or
+2. the expression throws an exception.
+
+In both cases the contract violation handling strategy of the configured build
+mode is invoked. In all other cases the contract check has no effect other than
+potential effects of evaluating the condition (this can cause template
+instantiations, amongst other things).
 
 ## Build Time Configuration
 
@@ -145,17 +158,22 @@ You have to implement a function with the following signature as handler:
 ```c++
 namespace ctrx
 {
-void handle_contract_violation(contract_type type, char const* msg, std::source_location const& sloc);
+void handle_contract_violation(contract_type type, std::string_view msg, std::source_location const& sloc);
 } // namespace ctrx
 ```
 
 - The `type` argument determines the type of the failed contract check.
-- The `msg` is a descriptive string of the failed contract check.
+- The `msg` is a descriptive string of the failed contract check. It is only
+  valid until the end of this function call. If you want to use the viewed string
+  afterwards, you need to copy it.
 - The `sloc` is the source location where the contract violation occurred.
 
 ## Constant Evaluation
 
-Generally, contract checks can be used in `constexpr` and `consteval` functions.
+Generally, contract checks can be used in `constexpr` and `consteval` functions, as
+long as the check expression is `constexpr`-capable (i.e. calls only `constexpr`
+functions and depends on no runtime data).
+
 However, in most modes, a failed contract check during constant evaluation results
 in an immediate compilation error. The only guaranteed exception is if the
 build mode is `OFF` - in this case, no diagnostic is issued and constant
@@ -259,7 +277,7 @@ discussion.
 4. It is advisable to compile your unit tests with all checks turned on and in
    `THROW` mode - virtually all unit test frameworks treat an escaped exception
    as a test failure. Therefore, your tests will fail if any contract violation
-   occured, and give you a nice message of what went wrong.
+   occurs, and give you a nice message of what went wrong.
 5. Be very careful about the `ASSUME` mode. Few software is free of bugs, and
    this mode has the ability to make your application behave much worse than it
    did without it.
