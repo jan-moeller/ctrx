@@ -242,7 +242,7 @@ These intentionally have the same names as the preprocessor macros they set.
 If you're using [CPM](https://github.com/cpm-cmake/CPM.cmake), you can use CTRX like this:
 
 ```cmake
-CPMAddPackage("gh:jan-moeller/ctrx@1.4.0")
+CPMAddPackage("gh:jan-moeller/ctrx@1.5.0")
 target_link_libraries(YOUR_TARGET PRIVATE ctrx::ctrx)
 ```
 
@@ -251,7 +251,7 @@ Note that you can also configure CTRX this way:
 ```cmake
 CPMAddPackage(
         NAME ctrx
-        VERSION 1.4.0
+        VERSION 1.5.0
         GITHUB_REPOSITORY jan-moeller/ctrx
         OPTIONS "CTRX_CONFIG_MODE THROW" "CTRX_CONFIG_LEVEL AUDIT"
 ) # Or set whatever options you like
